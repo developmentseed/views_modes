@@ -1,0 +1,176 @@
+<?php
+
+/**
+ * Implementation of hook_views_api().
+ */
+function views_modes_views_api() {
+  return array('api' => 2);
+}
+
+/**
+ * Implementation of hook_block().
+ */
+function views_modes_block($op = 'list', $delta = 0) {
+  switch ($op) {
+    case 'list':
+      $blocks = array();
+      $blocks['modes']['info'] = t('Views mode links');
+      return $blocks;
+    case 'view':
+      if ($delta == 'modes' && $display = views_get_page_view()) {
+        $view = $display->view;
+        $links = array();
+
+        // Active mode
+        $active_mode = views_modes_get_active_mode();
+        $active_display = views_modes_get_active_mode_display($view);
+
+        $query = $_GET;
+        $query['views_mode'] = 'default';
+
+        foreach ($view->display as $display_id => $display) {
+          if ($display->display_plugin == 'mode' && !empty($display->handler) && $display->handler->is_attached_to($view->current_display)) {
+            $mode_id = $display->handler->get_option('mode_id');
+            $mode_id = empty($mode_id) ? $display_id : $mode_id;
+
+            $query = $_GET;
+            $query['views_mode'] = $mode_id;
+            $links[$mode_id] = array(
+              'title' => $display->handler->get_option('mode_name'),
+              'href' => $view->get_url(),
+              'query' => drupal_query_string_encode($query, array('q')),
+              'attributes' => array('class' => $active_display === $display ? 'views-modes-active' : ''),
+            );
+          }
+        }
+
+        if (!empty($links)) {
+          // Provide a 'reset' mode link.
+          $query['views_mode'] = 'default';
+          $links = array('default' => array(
+            'title' => t('Default'),
+            'href' => $view->get_url(),
+            'query' => drupal_query_string_encode($query, array('q')),
+            'attributes' => array('class' => $active_mode === 'default' ? 'views-modes-active' : ''),
+          )) + $links;
+          
+        }
+        return array('content' => theme('links', $links));
+      }
+      break;
+  }
+}
+
+/**
+ * Implementation of hook_context_conditions().
+ */
+function views_modes_context_conditions() {
+  $conditions = array();
+  $conditions['views_modes'] = array(
+    '#title' => t('Views modes'),
+    '#options' => views_modes_get_mode_options(),
+    '#type' => 'checkboxes',
+  );
+  return $conditions;
+}
+
+/**
+ * Implementation of hook_views_plugins().
+ */
+function views_modes_views_plugins() {
+  return array(
+    'display' => array(
+      'mode' => array(
+        'title' => t('Mode'),
+        'help' => t('Modes can be attached to other displays to allow them to switch display modes.'),
+        'handler' => 'views_modes_plugin_display_mode',
+        'theme' => 'views_view',
+        'use ajax' => TRUE,
+        'use pager' => TRUE,
+        'parent' => 'attachment',
+      ),
+    ),
+  );
+}
+
+/**
+ * Implementation of hook_views_pre_build().
+ */
+function views_modes_views_pre_build(&$view) {
+  $display = views_modes_get_active_mode_display($view);
+  if ($display && $display->handler->is_attached_to($view->current_display)) {
+    if (module_exists('context')) {
+      $mode_id = views_modes_get_active_mode();
+      context_set_by_condition('views_modes', $mode_id);
+    }
+
+    // Display options which can be overridden by modes.
+    $override_options = array(
+      'fields', 'relationships', 'sort',
+      'style_plugin', 'style_options', 'row_plugin', 'row_options',
+    );
+    foreach ($override_options as $key) {
+      $value = $display->handler->get_option($key);
+      $view->display_handler->set_option($key, $value);
+    }
+    $pager_options = array(
+      'use_pager', 'items_per_page', 'offset', 'pager_element',
+    );
+    foreach ($pager_options as $key) {
+      $value = $display->handler->get_option($key);
+      $view->pager[$key] = $value;
+    }
+  }
+}
+
+/**
+ * Get the active mode ID.
+ */
+function views_modes_get_active_mode() {
+  $mode_id = 'default';
+  if (isset($_GET['views_mode'])) {
+    $mode_id = $_GET['views_mode'];
+    $_SESSION['views_mode'] = $mode_id;
+  }
+  else if (isset($_SESSION['views_mode'])) {
+    $mode_id = $_SESSION['views_mode'];
+  }
+  return $mode_id;
+}
+
+/**
+ * Retrieve the display of the active mode for the given view.
+ */
+function views_modes_get_active_mode_display($view) {
+  $mode_id = views_modes_get_active_mode();
+  foreach ($view->display as $display_id => $display) {
+    if ($display->display_plugin == 'mode' && $options = $display->handler->get_option('displays')) {
+      if ($display->handler->get_option('mode_id') === $mode_id || $display_id === $mode_id) {
+        return $display;
+      }
+    }
+  }
+  return FALSE;
+}
+
+/**
+ * Return an options array suitable for a FormAPI element of all modes.
+ */
+function views_modes_get_mode_options() {
+  $options = array();
+
+  $views = views_get_all_views();
+  foreach ($views as $view) {
+    foreach ($view->display as $display_id => $display) {
+      if ($display->display_plugin == 'mode') {
+        if (!empty($display->display_options['mode_id']) && !empty($display->display_options['mode_name'])) {
+          $mode_id = $display->display_options['mode_id'];
+          $mode_name = $display->display_options['mode_name'];
+          $options[$mode_id] = $mode_name;
+        }
+      }
+    }
+  }
+
+  return $options;
+}

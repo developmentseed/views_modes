@@ -1,0 +1,5 @@
+name = "Views Modes"
+description = "Provides a 'mode' Views display which can be attached to page views as alternative modes of display."
+package = "Views Bonus Pack"
+dependencies[] = views
+core = "6.x"
