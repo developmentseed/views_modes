@@ -25,20 +25,16 @@ function views_modes_block($op = 'list', $delta = 0) {
         $active_mode = views_modes_get_active_mode();
         $active_display = views_modes_get_active_mode_display($view);
 
-        $query = $_GET;
-        $query['views_mode'] = 'default';
-
         foreach ($view->display as $display_id => $display) {
           if ($display->display_plugin == 'mode' && !empty($display->handler) && $display->handler->is_attached_to($view->current_display)) {
             $mode_id = $display->handler->get_option('mode_id');
             $mode_id = empty($mode_id) ? $display_id : $mode_id;
 
-            $query = $_GET;
-            $query['views_mode'] = $mode_id;
+            $purl_ops = array('views_modes' => 'default');
             $links[$mode_id] = array(
               'title' => $display->handler->get_option('mode_name'),
               'href' => $view->get_url(),
-              'query' => drupal_query_string_encode($query, array('q')),
+              'purl' => array('add' => array(array('provider' => 'views_modes', 'id' => $mode_id))),
               'attributes' => array('class' => $active_display === $display ? 'views-modes-active' : ''),
             );
           }
@@ -50,7 +46,7 @@ function views_modes_block($op = 'list', $delta = 0) {
           $links = array('default' => array(
             'title' => t('Default'),
             'href' => $view->get_url(),
-            'query' => drupal_query_string_encode($query, array('q')),
+            'purl' => array('add' => array(array('provider' => 'views_modes', 'id' => 'default'))),
             'attributes' => array('class' => $active_mode === 'default' ? 'views-modes-active' : ''),
           )) + $links;
           
@@ -126,14 +122,10 @@ function views_modes_views_pre_build(&$view) {
 /**
  * Get the active mode ID.
  */
-function views_modes_get_active_mode() {
-  $mode_id = 'default';
-  if (isset($_GET['views_mode'])) {
-    $mode_id = $_GET['views_mode'];
-    $_SESSION['views_mode'] = $mode_id;
-  }
-  else if (isset($_SESSION['views_mode'])) {
-    $mode_id = $_SESSION['views_mode'];
+function views_modes_get_active_mode($mode = '') {
+  static $mode_id;
+  if (!isset($mode_id)) {
+    $mode_id = empty($mode) ? 'default' : $mode;
   }
   return $mode_id;
 }
@@ -173,4 +165,27 @@ function views_modes_get_mode_options() {
   }
 
   return $options;
+}
+
+/**
+ * PURL module integration 
+ *
+ * Implementation of hook_purl_provider()
+ */
+function views_modes_purl_provider() {
+  return array(
+    'views_modes' => array(
+      'name' => t('Views modes'),
+      'description' => t('Set the mode to be use in with enabled views.'),
+      'callback' => 'views_modes_purl',
+      'example' => '?views-mode=list',
+    )
+  );
+}
+
+/**
+ * Purl callback to set the proper mode.
+ */
+function views_modes_purl($value) {
+  views_modes_get_active_mode($value);
 }
