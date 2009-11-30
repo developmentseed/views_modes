@@ -8,6 +8,56 @@ function views_modes_views_api() {
 }
 
 /**
+ * Provides a links array of potential modes for the current page view.
+ */
+function views_modes_get_links() {
+  $links = array();
+
+  $display = views_get_page_view();
+  if ($display) {
+    $view = $display->view;
+
+    // Active mode
+    $active_mode = views_modes_get_active_mode();
+    $active_display = views_modes_get_active_mode_display($view);
+
+
+    foreach ($view->display as $display_id => $display) {
+      if ($display->display_plugin == 'mode' && !empty($display->handler) && $display->handler->is_attached_to($view->current_display)) {
+        $mode_id = $display->handler->get_option('mode_id');
+        $mode_id = empty($mode_id) ? $display_id : $mode_id;
+
+        $purl_ops = array('views_modes' => 'default');
+        $links[$mode_id] = array(
+          'title' => $display->handler->get_option('mode_name'),
+          'href' => $view->get_url(),
+          'purl' => array('add' => array(array('provider' => 'views_modes', 'id' => $mode_id))),
+          'attributes' => array('class' => $active_display === $display ? 'views-modes-active' : ''),
+        );
+      }
+    }
+
+    if (!empty($links)) {
+      $title = t('Default');
+      // Only use page display title if not the default "Page"
+      if (isset($view->display[$view->current_display], $view->display[$view->current_display]->display_title)) {
+        $title = $view->display[$view->current_display]->display_title !== t('Page') ? $view->display[$view->current_display]->display_title : $title;
+      }
+      // Provide a 'reset' mode link.
+      $query['views_mode'] = 'default';
+      $links = array('default' => array(
+        'title' => $title,
+        'href' => $view->get_url(),
+        'purl' => array('add' => array(array('provider' => 'views_modes', 'id' => 'default'))),
+        'attributes' => array('class' => $active_mode === 'default' ? 'views-modes-active' : ''),
+      )) + $links;
+    }
+  }
+
+  return $links;
+}
+
+/**
  * Implementation of hook_block().
  */
 function views_modes_block($op = 'list', $delta = 0) {
@@ -17,40 +67,7 @@ function views_modes_block($op = 'list', $delta = 0) {
       $blocks['modes']['info'] = t('Views mode links');
       return $blocks;
     case 'view':
-      if ($delta == 'modes' && $display = views_get_page_view()) {
-        $view = $display->view;
-        $links = array();
-
-        // Active mode
-        $active_mode = views_modes_get_active_mode();
-        $active_display = views_modes_get_active_mode_display($view);
-
-        foreach ($view->display as $display_id => $display) {
-          if ($display->display_plugin == 'mode' && !empty($display->handler) && $display->handler->is_attached_to($view->current_display)) {
-            $mode_id = $display->handler->get_option('mode_id');
-            $mode_id = empty($mode_id) ? $display_id : $mode_id;
-
-            $purl_ops = array('views_modes' => 'default');
-            $links[$mode_id] = array(
-              'title' => $display->handler->get_option('mode_name'),
-              'href' => $view->get_url(),
-              'purl' => array('add' => array(array('provider' => 'views_modes', 'id' => $mode_id))),
-              'attributes' => array('class' => $active_display === $display ? 'views-modes-active' : ''),
-            );
-          }
-        }
-
-        if (!empty($links)) {
-          // Provide a 'reset' mode link.
-          $query['views_mode'] = 'default';
-          $links = array('default' => array(
-            'title' => t('Default'),
-            'href' => $view->get_url(),
-            'purl' => array('add' => array(array('provider' => 'views_modes', 'id' => 'default'))),
-            'attributes' => array('class' => $active_mode === 'default' ? 'views-modes-active' : ''),
-          )) + $links;
-          
-        }
+      if ($delta == 'modes' && $links = views_modes_get_links()) {
         return array('content' => theme('links', $links));
       }
       break;
