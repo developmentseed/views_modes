@@ -32,7 +32,10 @@ function views_modes_get_links() {
           'title' => $display->handler->get_option('mode_name'),
           'href' => $view->get_url(),
           'purl' => array('add' => array(array('provider' => 'views_modes', 'id' => $mode_id))),
-          'attributes' => array('class' => $active_display === $display ? 'views-modes-active' : ''),
+          'attributes' => array(
+            'class' => $active_display === $display ? 'views-modes-active' : '',
+            'title' => $display->handler->get_option('mode_name'),
+          ),
         );
       }
     }
@@ -49,7 +52,10 @@ function views_modes_get_links() {
         'title' => $title,
         'href' => $view->get_url(),
         'purl' => array('add' => array(array('provider' => 'views_modes', 'id' => 'default'))),
-        'attributes' => array('class' => $active_mode === 'default' ? 'views-modes-active' : ''),
+        'attributes' => array(
+          'class' => $active_mode === 'default' ? 'views-modes-active' : '',
+          'title' => $title,
+        ),
       )) + $links;
     }
   }
