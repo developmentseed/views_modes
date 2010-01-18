@@ -81,16 +81,42 @@ function views_modes_block($op = 'list', $delta = 0) {
 }
 
 /**
- * Implementation of hook_context_conditions().
+ * Implementation of hook_ctools_plugin_api().
  */
-function views_modes_context_conditions() {
-  $conditions = array();
-  $conditions['views_modes'] = array(
-    '#title' => t('Views modes'),
-    '#options' => views_modes_get_mode_options(),
-    '#type' => 'checkboxes',
+function views_modes_ctools_plugin_api($module, $api) {
+  if ($module == 'context' && $api == 'plugins') {
+    return array('version' => 3);
+  }
+}
+
+/**
+ * Implementation of hook_context_plugins().
+ */
+function views_modes_context_plugins() {
+  $plugins = array();
+  $plugins['views_modes_context_condition_views_modes'] = array(
+    'handler' => array(
+      'path' => drupal_get_path('module', 'views_modes'),
+      'file' => 'views_modes_context_condition_views_modes.inc',
+      'class' => 'views_modes_context_condition_views_modes',
+      'parent' => 'context_condition',
+    ),
   );
-  return $conditions;
+  return $plugins;
+}
+
+/**
+ * Implementation of hook_context_registry().
+ */
+function views_modes_context_registry() {
+  return array(
+    'conditions' => array(
+      'views_modes' => array(
+        'title' => t('View mode'),
+        'plugin' => 'views_modes_context_condition_views_modes',
+      ),
+    ),
+  );
 }
 
 /**
@@ -120,7 +146,9 @@ function views_modes_views_pre_build(&$view) {
   if ($display && $display->handler->is_attached_to($view->current_display)) {
     if (module_exists('context')) {
       $mode_id = views_modes_get_active_mode();
-      context_set_by_condition('views_modes', $mode_id);
+      if ($plugin = context_get_plugin('condition', 'views_modes')) {
+        $plugin->execute($mode_id);
+      }
     }
 
     // Display options which can be overridden by modes.
@@ -166,28 +194,6 @@ function views_modes_get_active_mode_display($view) {
     }
   }
   return FALSE;
-}
-
-/**
- * Return an options array suitable for a FormAPI element of all modes.
- */
-function views_modes_get_mode_options() {
-  $options = array();
-
-  $views = views_get_all_views();
-  foreach ($views as $view) {
-    foreach ($view->display as $display_id => $display) {
-      if ($display->display_plugin == 'mode') {
-        if (!empty($display->display_options['mode_id']) && !empty($display->display_options['mode_name'])) {
-          $mode_id = $display->display_options['mode_id'];
-          $mode_name = $display->display_options['mode_name'];
-          $options[$mode_id] = $mode_name;
-        }
-      }
-    }
-  }
-
-  return $options;
 }
 
 /**
