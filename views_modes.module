@@ -10,7 +10,7 @@ function views_modes_views_api() {
 /**
  * Provides a links array of potential modes for the current page view.
  */
-function views_modes_get_links() {
+function views_modes_get_links($icons = TRUE) {
   $links = array();
 
   $display = views_get_page_view();
@@ -28,9 +28,11 @@ function views_modes_get_links() {
         $mode_id = empty($mode_id) ? $display_id : $mode_id;
 
         $purl_ops = array('views_modes' => 'default');
+        $title = $display->handler->get_option('mode_name');
         $links[$mode_id] = array(
-          'title' => $display->handler->get_option('mode_name'),
+          'title' => $icons ? "<span class='icon'></span>{$title}" : $title,
           'href' => $view->get_url(),
+          'html' => $icons,
           'purl' => array('add' => array(array('provider' => 'views_modes', 'id' => $mode_id))),
           'attributes' => array(
             'class' => $active_display === $display ? 'views-modes-active' : '',
@@ -49,8 +51,9 @@ function views_modes_get_links() {
       // Provide a 'reset' mode link.
       $query['views_mode'] = 'default';
       $links = array('default' => array(
-        'title' => $title,
+        'title' => $icons ? "<span class='icon'></span>{$title}" : $title,
         'href' => $view->get_url(),
+        'html' => $icons,
         'purl' => array('add' => array(array('provider' => 'views_modes', 'id' => 'default'))),
         'attributes' => array(
           'class' => $active_mode === 'default' ? 'views-modes-active' : '',

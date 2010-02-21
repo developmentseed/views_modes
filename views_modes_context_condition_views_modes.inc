@@ -1,5 +1,4 @@
 <?php
-// $Id: context_condition_views.inc,v 1.1.2.1 2009/12/14 22:34:05 yhahn Exp $
 
 class views_modes_context_condition_views_modes extends context_condition {
 
@@ -27,10 +26,8 @@ class views_modes_context_condition_views_modes extends context_condition {
 
   function execute($mode) {
     $contexts = $this->get_contexts($mode);
-    $this->values[$mode] = array();
     foreach ($contexts as $context) {
-      $this->values[$mode][] = $context->name;
-      context_set('context', $context->name, $context);
+      $this->condition_met($context, $mode);
     }
   }
 }
