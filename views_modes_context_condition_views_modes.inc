@@ -8,6 +8,7 @@ class views_modes_context_condition_views_modes extends context_condition {
   function condition_values() {
     $options = array();
 
+    $options['default'] = "Default";
     $views = views_get_all_views();
     foreach ($views as $view) {
       foreach ($view->display as $display_id => $display) {

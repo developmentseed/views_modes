@@ -175,6 +175,9 @@ function views_modes_views_pre_build(&$view) {
       }
     }
   }
+  else if (module_exists('context') && ($plugin = context_get_plugin('condition', 'views_modes')) && _views_modes_has_modes($view)) {
+    $plugin->execute('default');
+  }
 }
 
 /**
@@ -197,6 +200,20 @@ function views_modes_get_active_mode_display($view) {
     if ($display->display_plugin == 'mode' && $options = $display->handler->get_option('displays')) {
       if (($display->handler->get_option('mode_id') === $mode_id || $display_id === $mode_id) && $display->handler->is_attached_to($view->current_display)) {
         return $display;
+      }
+    }
+  }
+  return FALSE;
+}
+
+/**
+ * Return if the current display has any associated modes.
+ */
+function _views_modes_has_modes($view) {
+  foreach ($view->display as $display_id => $display) {
+    if ($display->display_plugin == 'mode' && $options = $display->handler->get_option('displays')) {
+      if ($display->handler->is_attached_to($view->current_display)) {
+        return TRUE;
       }
     }
   }
