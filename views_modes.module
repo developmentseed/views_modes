@@ -156,7 +156,7 @@ function views_modes_views_pre_build(&$view) {
 
     // Display options which can be overridden by modes.
     $override_options = array(
-      'fields', 'relationships', 'sort',
+      'fields', 'relationships', 'sorts',
       'style_plugin', 'style_options', 'row_plugin', 'row_options', 'filters',
     );
     foreach ($override_options as $key) {
