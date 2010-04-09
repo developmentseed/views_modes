@@ -43,15 +43,15 @@ function views_modes_get_links($icons = TRUE) {
     }
 
     if (!empty($links)) {
-      $title = t('Default');
+      $title = 'Default';
       // Only use page display title if not the default "Page"
       if (isset($view->display[$view->current_display], $view->display[$view->current_display]->display_title)) {
-        $title = $view->display[$view->current_display]->display_title !== t('Page') ? $view->display[$view->current_display]->display_title : $title;
+        $title = $view->display[$view->current_display]->display_title !== 'Page' ? $view->display[$view->current_display]->display_title : $title;
       }
       // Provide a 'reset' mode link.
       $query['views_mode'] = 'default';
       $links = array('default' => array(
-        'title' => $icons ? "<span class='icon'></span>{$title}" : $title,
+        'title' => $icons ? "<span class='icon'></span>". t($title) : t($title),
         'href' => $view->get_url(),
         'html' => $icons,
         'purl' => array('add' => array(array('provider' => 'views_modes', 'id' => 'default'))),
