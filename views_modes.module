@@ -158,11 +158,17 @@ function views_modes_views_pre_build(&$view) {
     $override_options = array(
       'fields', 'relationships', 'sorts',
       'style_plugin', 'style_options', 'row_plugin', 'row_options', 'filters',
+      'empty', 'footer', 'header',
     );
     foreach ($override_options as $key) {
       if (!$display->handler->is_defaulted($key)) {
         $value = $display->handler->get_option($key);
         $view->display_handler->set_option($key, $value);
+
+        // If the handlers have been set, remove them so they can be re-inited.
+        if (isset($view->display_handler->handlers[$key])) {
+          unset($view->display_handler->handlers[$key]);
+        }
       }
     }
     $pager_options = array(
