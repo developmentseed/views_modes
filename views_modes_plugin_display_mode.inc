@@ -74,6 +74,7 @@ class views_modes_plugin_display_mode extends views_plugin_display {
           '#required' => TRUE,
           '#type' => 'textfield',
           '#default_value' => $this->get_option('mode_name'),
+          '#description' => t('This name will serve as the human readable title of the mode link.'),
         );
         break;
       case 'displays':
