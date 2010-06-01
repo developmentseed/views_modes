@@ -155,31 +155,24 @@ function views_modes_views_pre_build(&$view) {
     }
 
     // Display options which can be overridden by modes.
-    $override_options = array(
-      'fields', 'relationships', 'sorts',
-      'style_plugin', 'style_options', 'row_plugin', 'row_options', 'filters',
-      'empty', 'footer', 'header',
-    );
-    foreach ($override_options as $key) {
+    foreach ($display->handler->defaultable_sections() as $key => $items) {
       if (!$display->handler->is_defaulted($key)) {
         $value = $display->handler->get_option($key);
         $view->display_handler->set_option($key, $value);
+      }
+    }
 
-        // If the handlers have been set, remove them so they can be re-inited.
-        if (isset($view->display_handler->handlers[$key])) {
-          unset($view->display_handler->handlers[$key]);
-        }
+    // Uninit any handlers which have been inited.
+    if (!empty($view->inited)) {
+      foreach (views_object_types() as $key => $info) {
+        unset($view->{$key});
       }
+      $view->inited = FALSE;
     }
-    $pager_options = array(
-      'use_pager', 'items_per_page', 'offset', 'pager_element',
-    );
-    foreach ($pager_options as $key) {
-      if (!$display->handler->is_defaulted($key)) {
-        $value = $display->handler->get_option($key);
-        $view->pager[$key] = $value;
-      }
-    }
+    $view->display_handler->handlers = array();
+
+    // Re-init everything.
+    $view->init_handlers();
   }
   else if (module_exists('context') && ($plugin = context_get_plugin('condition', 'views_modes')) && _views_modes_has_modes($view)) {
     $plugin->execute('default');
@@ -227,7 +220,7 @@ function _views_modes_has_modes($view) {
 }
 
 /**
- * PURL module integration 
+ * PURL module integration
  *
  * Implementation of hook_purl_provider()
  */
