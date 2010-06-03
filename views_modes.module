@@ -169,7 +169,10 @@ function views_modes_views_pre_build(&$view) {
       }
       $view->inited = FALSE;
     }
+
+    // Clear out other inited values.
     $view->display_handler->handlers = array();
+    unset($view->args);
 
     // Re-init everything.
     $view->init_handlers();
