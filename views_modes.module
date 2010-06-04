@@ -174,7 +174,10 @@ function views_modes_views_pre_build(&$view) {
     $view->display_handler->handlers = array();
 
     // Re-init everything.
+    // @TODO: There are almost certainly other init events that need to be
+    // re-run here.
     $view->init_handlers();
+    $view->set_use_ajax($view->display_handler->use_ajax());
   }
   else if (module_exists('context') && ($plugin = context_get_plugin('condition', 'views_modes')) && _views_modes_has_modes($view)) {
     $plugin->execute('default');
