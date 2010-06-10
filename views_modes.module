@@ -21,7 +21,6 @@ function views_modes_get_links($icons = TRUE) {
     $active_mode = views_modes_get_active_mode();
     $active_display = views_modes_get_active_mode_display($view);
 
-
     foreach ($view->display as $display_id => $display) {
       if ($display->display_plugin == 'mode' && !empty($display->handler) && $display->handler->is_attached_to($view->current_display) && $display->handler->access()) {
         $mode_id = $display->handler->get_option('mode_id');
@@ -34,6 +33,7 @@ function views_modes_get_links($icons = TRUE) {
           'href' => $view->get_url(),
           'html' => $icons,
           'purl' => array('add' => array(array('provider' => 'views_modes', 'id' => $mode_id))),
+          'query' => drupal_query_string_encode($_GET, array('q', 'page')),
           'attributes' => array(
             'class' => $active_display === $display ? 'views-modes-active' : '',
             'title' => $display->handler->get_option('mode_name'),
@@ -55,6 +55,7 @@ function views_modes_get_links($icons = TRUE) {
         'href' => $view->get_url(),
         'html' => $icons,
         'purl' => array('add' => array(array('provider' => 'views_modes', 'id' => 'default'))),
+        'query' => drupal_query_string_encode($_GET, array('q', 'page')),
         'attributes' => array(
           'class' => $active_mode === 'default' ? 'views-modes-active' : '',
           'title' => $title,
